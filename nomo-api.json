@@ -1,1 +1,47 @@
-{"info":{"title":"NOMO","description":"NOMO API","version":"1.0.0"},"openapi":"3.0.0"}
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "NOMO",
+    "description": "NOMO API",
+    "contact": {
+      "name": "Huy Dinh",
+      "url": "",
+      "email": "huyffs@gmail.com"
+    },
+    "license": {
+      "name": "MIT License",
+      "url": "https://opensource.org/licenses/MIT"
+    },
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/accounts": {},
+    "/accounts/{id}": {},
+    "/accounts/{id}/bank-accounts": {},
+    "/accounts/{id}/bank-accounts/{id}": {},
+    "/accounts/{id}/users": {},
+    "/accounts/{id}/users/{id}": {},
+    "/accounts/{id}/users/{id}/addresses": {},
+    "/accounts/{id}/users/{id}/addresses/{id}": {},
+    "/accounts/{id}/wallets": {},
+    "/accounts/{id}/wallets/{id}": {},
+    "/payments": {},
+    "/payments/{id}": {},
+    "/payments/{id}/lines": {},
+    "/payments/{id}/lines/{id}": {},
+    "/payments/{id}/lines/{id}/transactions": {},
+    "/payments/{id}/lines/{id}/transactions/{id}": {},
+    "/transactions": {},
+    "/transactions/{id}": {}
+  },
+  "components": {
+    "securitySchemes": {
+      "API Key": {
+        "type": "apiKey",
+        "description": "API Key security",
+        "name": "Authorization",
+        "in": "header"
+      }
+    }
+  }
+}
