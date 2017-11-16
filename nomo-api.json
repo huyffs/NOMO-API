@@ -15,9 +15,36 @@
     "version": "1.0.0"
   },
   "paths": {
-    "/accounts": {},
-    "/accounts/{id}": {},
-    "/accounts/{id}/bank-accounts": {},
+    "/accounts": {
+      "get": {
+        "description": "Retrieves a list of accounts"
+      },
+      "post": {
+        "description": "Create a new account"
+      }
+    },
+    "/accounts/{id}": {
+      "get": {
+        "description": "Retrieves an account by id"
+      },
+      "put": {
+        "description": "Replace an account by id"
+      },
+      "delete": {
+        "description": "Delete an account by id"
+      },
+      "patch": {
+        "description": "Patch an account by id"
+      }
+    },
+    "/accounts/{id}/bank-accounts": {
+      "get": {
+        "description": "List all bank accounts"
+      },
+      "post": {
+        "description": "Create a new bank account"
+      }
+    },
     "/accounts/{id}/bank-accounts/{id}": {},
     "/accounts/{id}/users": {},
     "/accounts/{id}/users/{id}": {},
@@ -32,9 +59,642 @@
     "/payments/{id}/lines/{id}/transactions": {},
     "/payments/{id}/lines/{id}/transactions/{id}": {},
     "/transactions": {},
-    "/transactions/{id}": {}
+    "/transactions/{id}": {},
+    "/uploads": {},
+    "/kyc/": {}
   },
   "components": {
+    "schemas": {
+      "account": {
+        "properties": {
+          "id": {
+            "description": "Unique id of the account",
+            "type": "string"
+          },
+          "external_id": {
+            "description": "The account's ID in your system.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Name on account - for company account, this would be the company name, for individual accounts, this would be the individualâs name.",
+            "type": "string"
+          },
+          "website": {
+            "description": "URL of a website",
+            "type": "string"
+          },
+          "email": {
+            "description": "Email address of the contact for this account",
+            "type": "string"
+          },
+          "phone_number": {
+            "description": "Phone number where counrtry code and phone number are separated by a hyphen",
+            "type": "string"
+          },
+          "company_number": {
+            "description": "The company's registtration number",
+            "type": "string"
+          },
+          "vat_id": {
+            "description": "The customerâs VAT identification number",
+            "type": "string"
+          },
+          "type": {
+            "description": "Type of account",
+            "enum": [
+              "partner",
+              "individual",
+              "company"
+            ],
+            "type": "string"
+          },
+          "created_by_id": {
+            "description": "Id of the account that created this account",
+            "type": "string"
+          },
+          "metadata": {
+            "description": "Additional metadata",
+            "type": "object"
+          }
+        }
+      },
+      "address": {
+        "properties": {
+          "city": {
+            "description": "City/Suburb/Town/Village",
+            "type": "string"
+          },
+          "country": {
+            "description": "The country code of the address. Country codes are ISO 3166-2 standard",
+            "type": "string"
+          },
+          "address": {
+            "description": "Address",
+            "type": "string"
+          },
+          "postal_code": {
+            "description": "Zip/Postal Code. Required for UK",
+            "type": "string"
+          },
+          "state": {
+            "description": "State/Province/County. Required for US",
+            "type": "string"
+          },
+          "default": {
+            "description": "Mark as the default address. This unmarks other addresses (belonging to the same object) as default",
+            "type": "boolean"
+          },
+          "metadata": {
+            "description": "Additional metadata attached to the address",
+            "type": "object"
+          }
+        }
+      },
+      "bank-account": {
+        "properties": {
+          "id": {
+            "description": "Id of the bank account",
+            "type": "string"
+          },
+          "account_id": {
+            "description": "Id of the account this bank account belongs to",
+            "type": "string"
+          },
+          "account_holder_name": {
+            "description": "The name of the person/business or business that owns the bank account",
+            "type": "string"
+          },
+          "account_holder_type": {
+            "description": "The type of entity that holds the account. This can be either `individual` or `company`",
+            "enum": [
+              "individual",
+              "company"
+            ],
+            "type": "string"
+          },
+          "first_name": {
+            "description": "Account holder's first name (required for individuals)",
+            "type": "string"
+          },
+          "last_name": {
+            "description": "Account holder's last name (required for individuals)",
+            "type": "string"
+          },
+          "company_name": {
+            "description": "Name of the company (required for companies)",
+            "type": "string"
+          },
+          "address_id": {
+            "description": "ID of the Address object",
+            "type": "string"
+          },
+          "bank_name": {
+            "description": "Name of the bank associated with the routing number, e.g. `HSBC`",
+            "type": "string"
+          },
+          "account_number": {
+            "description": "The account number of the account",
+            "type": "string"
+          },
+          "country": {
+            "description": "Two-letter ISO code representing the country the bank account is located in",
+            "type": "string"
+          },
+          "last4": {
+            "description": "Last 4 digits of the account number",
+            "type": "string"
+          },
+          "currency": {
+            "description": "ISO 4217 alphabetic currency code representing the currency paid out to the bank account (See https://en.wikipedia.org/wiki/ISO_4217)",
+            "maxLength": 3,
+            "minLength": 3,
+            "type": "string"
+          },
+          "default_for_currency": {
+            "description": "Whether this external account is the default account for its currency",
+            "type": "boolean"
+          },
+          "fingerprint": {
+            "description": "Uniquely identifies this particular bank account. You can use this attribute to check whether two bank accounts are the same",
+            "type": "string"
+          },
+          "metadata": {
+            "description": "A set of key/value pairs that you can attach to a bank account object. It can be useful for storing additional information about the bank account in a structured format",
+            "type": "object"
+          },
+          "aba": {
+            "description": "For US banks",
+            "type": "string"
+          },
+          "sort_code": {
+            "description": "For UK banks",
+            "type": "string"
+          },
+          "bank_code": {
+            "description": "For Singapore banks",
+            "type": "string"
+          },
+          "branch_code": {
+            "description": "For Singapore banks",
+            "type": "string"
+          },
+          "bsb_code": {
+            "description": "For Hong Kong banks",
+            "type": "string"
+          },
+          "clabe": {
+            "description": "For Mexico banks",
+            "type": "string"
+          },
+          "cnaps": {
+            "description": "For China banks",
+            "type": "string"
+          },
+          "institution_no": {
+            "description": "for Canada banks",
+            "type": "string"
+          },
+          "bic_swift": {
+            "description": "Should be 8 or 11 characters long. BIC/SWIFT codes are ISO 9362 standard",
+            "type": "string"
+          },
+          "iban": {
+            "description": "Should be up to 34 characters long. IBAN codes are ISO 13616:1997 standard",
+            "type": "string"
+          },
+          "bank_account_type": {
+            "description": "Type of US bank account - checkings - daily usage account, savings - account used for savings",
+            "enum": [
+              "checkings",
+              "savings"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "description": "Possible values are new, validated, verified, verification_failed, or errored. A bank account that hasnât had any activity or validation performed is new. If description:OpenWallet can determine that the bank account exists, its status will be validated. Note that there often isnât enough information to know (e.g. for smaller credit unions), and the validation is not always run. If customer bank account verification has succeeded, the bank account status will be verified. If the verification failed for any reason, such as microdeposit failure, the status will be verification_failed. If a transfer sent to this bank account fails, weâll set the status to errored and will not continue to send transfers until the bank details are updated.",
+            "enum": [
+              "new",
+              "validated",
+              "verified",
+              "verification_failed",
+              "errored"
+            ],
+            "type": "string"
+          }
+        }
+      },
+      "line": {
+        "properties": {
+          "id": {
+            "description": "Id of the line",
+            "type": "string"
+          },
+          "payment_id": {
+            "description": "Id of the payment",
+            "type": "string"
+          },
+          "state": {
+            "description": "State of the line. * `requested` Money has been requested, the buyer needs to authorise the payment via the app * `authorised` Buyer has authorised the payment request * `charged` The buyer has been charged by an external PSP, we are waiting for the money to arrive * `disputed` Buyer has disputed the payment, the seller must respond or cancel * `responded` Seller has responded, buyer must authorise or dispute again * `completed` Transaction is complete - the payment has been splitted up * `cancelled` The line has been cancelled\n",
+            "enum": [
+              "requested",
+              "authorised",
+              "charged",
+              "disputed",
+              "responded",
+              "completed",
+              "cancelled"
+            ],
+            "type": "string"
+          },
+          "escrow": {
+            "description": "If `true`, the money is held in escrow after it is charged. While in escrow, the buyer can **dispute** and the seller can **resolve** the payment. Once the buyer is happt, they can **complete** the payment. If the _seller_ admits fault, they can **cancel** the payment. State can move to `false` automatically after `escrow_expiry` has elapsed or by the user (in P2P) or by the partner (when using an external PSP)",
+            "type": "boolean"
+          },
+          "escrow_expiry": {
+            "format": "int64",
+            "description": "A unix timestamp of when the _state_ should changed to **completed** or **cancelled** if the **buyer** has not _disputed_ or the **seller** has not responded",
+            "type": "integer"
+          },
+          "description": {
+            "description": "A string description",
+            "type": "string"
+          },
+          "reference": {
+            "description": "A string reference",
+            "type": "string"
+          },
+          "metadata": {
+            "description": "Additional metadata attached to the payment",
+            "type": "object"
+          },
+          "created_at": {
+            "format": "int64",
+            "description": "Timestamp of when the wallet was created",
+            "type": "integer"
+          },
+          "updated_at": {
+            "format": "int64",
+            "description": "Timestamp of when the last balance adjustment",
+            "type": "integer"
+          }
+        }
+      },
+      "payment": {
+        "properties": {
+          "id": {
+            "description": "Id of the payment",
+            "type": "string"
+          },
+          "state": {
+            "description": "State of the payment -  `new`, `completed` `cancelled` or `deleted`",
+            "type": "string"
+          },
+          "psp_id": {
+            "description": "The ID of the PSP",
+            "type": "string"
+          },
+          "psp_fee": {
+            "format": "int64",
+            "description": "The amount the PSP kept as processing fee",
+            "type": "integer"
+          },
+          "group_key": {
+            "description": "A key to group multiple payments, e.g. promotion event id",
+            "type": "string"
+          },
+          "currency": {
+            "description": "ISO 4217 alphabetic currency code  (See https://en.wikipedia.org/wiki/ISO_4217)",
+            "maxLength": 3,
+            "minLength": 3,
+            "type": "string"
+          },
+          "ta_ref": {
+            "description": "Reference of the deposit into the trust account",
+            "type": "string"
+          },
+          "ta_tx_id": {
+            "description": "Id of the transaction into the trust account",
+            "type": "string"
+          },
+          "ta_tx_timestamp": {
+            "format": "int64",
+            "description": "Timestamp of the transaction into the trust account",
+            "type": "integer"
+          },
+          "description?": {
+            "description": "A string description",
+            "type": "string"
+          },
+          "reference?": {
+            "description": "A string reference",
+            "type": "string"
+          },
+          "metadata": {
+            "description": "Additional metadata attached to the payment",
+            "type": "object"
+          },
+          "created_at": {
+            "format": "int64",
+            "description": "Timestamp of when the wallet was created",
+            "type": "integer"
+          },
+          "updated_at": {
+            "format": "int64",
+            "description": "Timestamp of when the last balance adjustment",
+            "type": "integer"
+          }
+        }
+      },
+      "transaction": {
+        "properties": {
+          "id": {
+            "description": "Id of the transaction",
+            "type": "string"
+          },
+          "payment_id": {
+            "description": "Id of the Payment this transaction belongs to",
+            "type": "string"
+          },
+          "line_id": {
+            "description": "Id of the Line this transaction belongs to",
+            "type": "string"
+          },
+          "src_account_id": {
+            "description": "Id of the account that was debited by this transaction",
+            "type": "string"
+          },
+          "dst_account_id": {
+            "description": "Id of the account that was credited by this transaction",
+            "type": "string"
+          },
+          "src_wallet_id": {
+            "description": "Id of the wallet that was debited by this transaction",
+            "type": "string"
+          },
+          "dst_wallet_id": {
+            "description": "Id of the wallet that was credited by this transaction",
+            "type": "string"
+          },
+          "currency": {
+            "description": "ISO 4217 alphabetic currency code  (See https://en.wikipedia.org/wiki/ISO_4217)",
+            "maxLength": 3,
+            "minLength": 3,
+            "type": "string"
+          },
+          "type": {
+            "description": "Type of transaction",
+            "enum": [
+              "payment",
+              "reversal",
+              "transfer",
+              "payout"
+            ],
+            "type": "string"
+          },
+          "amount": {
+            "format": "int64",
+            "description": "The amount transfered",
+            "type": "integer"
+          },
+          "reverse_of": {
+            "description": "ID of the Transaction this transaction reverses",
+            "type": "string"
+          },
+          "reversed_amount": {
+            "format": "int64",
+            "description": "The amount that was reversed",
+            "type": "integer"
+          },
+          "description": {
+            "description": "A string description",
+            "type": "string"
+          },
+          "reference": {
+            "description": "A string reference",
+            "type": "string"
+          },
+          "metadata": {
+            "description": "Additional metadata to attach to the transaction",
+            "type": "object"
+          },
+          "created_at": {
+            "format": "int64",
+            "description": "Timestamp of when the wallet was created",
+            "type": "integer"
+          },
+          "updated_at": {
+            "format": "int64",
+            "description": "Timestamp of when the last balance adjustment",
+            "type": "integer"
+          },
+          "partner_id": {
+            "description": "The partner id of transaction",
+            "type": "string"
+          },
+          "state": {
+            "description": "The state of transaction",
+            "type": "string"
+          }
+        }
+      },
+      "upload": {
+        "properties": {
+          "id": {
+            "description": "Unique ID of the upload",
+            "type": "string"
+          },
+          "mime": {
+            "description": "Mime type. May be automatically detected.",
+            "type": "string"
+          },
+          "purpose": {
+            "description": "Purpose of the upload",
+            "enum": [
+              "dispute_evidence",
+              "identity_document",
+              "selfie"
+            ],
+            "type": "string"
+          },
+          "private": {
+            "description": "Keep the file private so only that your organisation's users can access",
+            "type": "boolean"
+          },
+          "uri": {
+            "description": "URI of file, if not flagged as private",
+            "type": "string"
+          },
+          "metadata": {
+            "description": "Additional metadata",
+            "type": "object"
+          }
+        }
+      },
+      "user": {
+        "properties": {
+          "id": {
+            "description": "Unique id for account",
+            "type": "string"
+          },
+          "external_id": {
+            "description": "The user's ID in your system.",
+            "type": "string"
+          },
+          "account_id": {
+            "description": "Id of the account this user belongs to",
+            "type": "string"
+          },
+          "external_account_id": {
+            "description": "The account's ID in your system.",
+            "type": "string"
+          },
+          "firstname": {
+            "description": "First name of the user.",
+            "type": "string"
+          },
+          "surname": {
+            "description": "Surname of the user.",
+            "type": "string"
+          },
+          "email": {
+            "description": "Email address of the user",
+            "type": "string"
+          },
+          "phone_number": {
+            "description": "Phone number where counrtry code and phone number are separated by a hyphen",
+            "type": "string"
+          },
+          "address_id": {
+            "description": "User's home/billing address",
+            "type": "string"
+          },
+          "metadata": {
+            "description": "Additional metadata attached to the address",
+            "type": "object"
+          }
+        }
+      },
+      "wallet": {
+        "properties": {
+          "id": {
+            "description": "Id of the wallet",
+            "type": "string"
+          },
+          "currency": {
+            "description": "ISO 4217 alphabetic currency code  (See https://en.wikipedia.org/wiki/ISO_4217)",
+            "maxLength": 3,
+            "minLength": 3,
+            "type": "string"
+          },
+          "name": {
+            "description": "Friendly name of the wallet",
+            "type": "string"
+          },
+          "balance": {
+            "format": "int64",
+            "description": "Balance of wallet",
+            "type": "integer"
+          },
+          "pending_credit": {
+            "format": "int64",
+            "description": "Balance of pending credits",
+            "type": "integer"
+          },
+          "pending_debit": {
+            "format": "int64",
+            "description": "Balance of pending debits",
+            "type": "integer"
+          },
+          "state": {
+            "description": "State of the wallet",
+            "enum": [
+              "inactive",
+              "active",
+              "locked"
+            ],
+            "type": "string"
+          },
+          "default_for_currency": {
+            "description": "True if this wallet is the default for the currency",
+            "type": "boolean"
+          },
+          "created_at": {
+            "format": "int64",
+            "description": "Timestamp of when the wallet was created",
+            "type": "integer"
+          },
+          "updated_at": {
+            "format": "int64",
+            "description": "Timestamp of when the last balance adjustment",
+            "type": "integer"
+          },
+          "metadata": {
+            "description": "Additional metadata",
+            "type": "object"
+          }
+        }
+      },
+      "kyc": {
+        "properties": {
+          "id": {
+            "description": "ID of the kyc document",
+            "type": "string"
+          },
+          "type": {
+            "description": "Type of document - `passport`, `bank statement`, etc",
+            "type": "string"
+          },
+          "status": {
+            "description": "Status of the document",
+            "type": "object",
+            "properties": {
+              "code": {
+                "description": "Status of the document",
+                "enum": [
+                  1,
+                  0,
+                  -1,
+                  -2
+                ],
+                "type": "integer"
+              },
+              "message": {
+                "description": "Status message",
+                "type": "string"
+              }
+            }
+          },
+          "number": {
+            "description": "Identity document's number",
+            "type": "string"
+          },
+          "checked_on": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "expires_on": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "upload_id": {
+            "description": "ID of the uploaded file",
+            "type": "string"
+          },
+          "provider": {
+            "description": "Name of the kyc provider for this document.",
+            "type": "string"
+          },
+          "provider_reference": {
+            "description": "Reference to the document if stored externally",
+            "type": "string"
+          },
+          "metadata?": {
+            "description": "Additional metadata",
+            "type": "object"
+          }
+        }
+      }
+    },
     "securitySchemes": {
       "API Key": {
         "type": "apiKey",
